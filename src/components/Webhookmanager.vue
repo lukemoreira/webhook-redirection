@@ -105,7 +105,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
-import { Trash2, Pencil, Webhook, RotateCcw, Trash2 } from 'lucide-vue-next';
+import { Pencil, Webhook, RotateCcw, Trash2 } from 'lucide-vue-next';
 
 // Define the new webhook object, webhooks list, and edit mode status
 const newWebhook = ref({
