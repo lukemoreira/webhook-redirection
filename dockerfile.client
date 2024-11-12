@@ -1,0 +1,17 @@
+# Dockerfile.client
+
+FROM node:18
+
+# Set working directory
+WORKDIR /app
+
+# Copy package.json and install dependencies for client
+COPY ./src/package*.json ./src/
+RUN npm install --prefix ./src
+
+# Copy client files
+COPY ./src ./src
+
+# Expose port and run dev server
+EXPOSE 5173
+CMD ["npm", "run", "dev", "--prefix", "./src"]
