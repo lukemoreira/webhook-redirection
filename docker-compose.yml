@@ -1,0 +1,29 @@
+version: '3'
+services:
+  server:
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+    container_name: express_server
+    ports:
+      - "5000:5000"
+    volumes:
+      - ./server:/app
+    environment:
+      - NODE_ENV=development
+      - PORT=5000
+      - DOMAIN_NAME=http://localhost:5000 # Set the domain name here
+
+  client:
+    build:
+      context: ./client
+      dockerfile: Dockerfile
+    container_name: vue_client
+    ports:
+      - "5174:4173"
+    volumes:
+      - ./client:/app
+    environment:
+      - NODE_ENV=development
+    depends_on:
+      - server
