@@ -13,6 +13,10 @@ const Webhook = sequelize.define('Webhook', {
     type: DataTypes.STRING,
     allowNull: true
   },
+  signatureHeader: {
+    type: DataTypes.STRING,
+    allowNull: true
+  },
   destination: {
     type: DataTypes.STRING,
     allowNull: false

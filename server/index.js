@@ -23,7 +23,7 @@ app.use(express.json());
   try {
     await sequelize.authenticate();
     console.log('Connection to SQLite has been established successfully.');
-    await sequelize.sync(); // Synchronize all models (create tables if they don't exist)
+    await sequelize.sync({ alter: true }); // Synchronize all models (create tables if they don't exist)
     console.log('Database synchronized successfully.');
   } catch (error) {
     console.error('Unable to connect to the database:', error);
@@ -32,10 +32,10 @@ app.use(express.json());
 
 // Create a new webhook
 app.post('/create-webhook', async (req, res) => {
-  const { signature, destination, name } = req.body;
+  const { signature, signatureHeader, destination, name } = req.body;
 
   try {
-    const newWebhook = await Webhook.create({ signature, destination, name });
+    const newWebhook = await Webhook.create({ signature, signatureHeader, destination, name });
     res.status(201).send({
       id: newWebhook.id,
       url: `${DOMAIN_NAME}/webhook-${newWebhook.id}`
@@ -75,7 +75,7 @@ app.delete('/api/webhooks/:id', async (req, res) => {
 // Update a webhook by ID
 app.put('/api/webhooks/:id', async (req, res) => {
   const { id } = req.params;
-  const { name, signature, destination } = req.body;
+  const { name, signature, signatureHeader, destination } = req.body;
 
   try {
     const webhook = await Webhook.findByPk(id);
@@ -84,6 +84,7 @@ app.put('/api/webhooks/:id', async (req, res) => {
     }
     webhook.name = name;
     webhook.signature = signature;
+    webhook.signatureHeader = signatureHeader;
     webhook.destination = destination;
 
     await webhook.save();
@@ -94,10 +95,66 @@ app.put('/api/webhooks/:id', async (req, res) => {
   }
 });
 
-// Middleware to verify the signature of incoming requests (reuse as before)
-const verifyOpenPhoneSignature = (req, res, next) => {
+// Export webhooks to JSON file
+app.get('/export-webhooks', async (req, res) => {
   try {
-    const signatureHeader = req.headers['openphone-signature'];
+    // Fetch all webhooks from the database
+    const webhooks = await Webhook.findAll();
+
+    // Convert data to JSON
+    const jsonData = JSON.stringify(webhooks, null, 2);
+
+    // Set headers for file download
+    res.setHeader('Content-Disposition', 'attachment; filename=webhooks-db-bkp.json');
+    res.setHeader('Content-Type', 'application/json');
+
+    // Send the JSON data as a downloadable file
+    res.status(200).send(jsonData);
+  } catch (error) {
+    console.error('Error exporting webhooks:', error);
+    res.status(500).send('Error exporting webhooks');
+  }
+});
+
+// Import webhooks from JSON file
+app.post('/import-webhooks', async (req, res) => {
+  try {
+    const webhooksData = req.body; // Assuming JSON is passed in the request body
+
+    if (!Array.isArray(webhooksData)) {
+      return res.status(400).send('Invalid data format: Expected an array of webhooks');
+    }
+
+    // Loop through each entry and add it to the database
+    for (const webhook of webhooksData) {
+      await Webhook.create({
+        id: webhook.id,  // Keep existing ID if provided
+        name: webhook.name,
+        signature: webhook.signature,
+        signatureHeader: webhook.signatureHeader,
+        destination: webhook.destination,
+      });
+    }
+
+    res.status(200).send('Webhooks imported successfully');
+  } catch (error) {
+    console.error('Error importing webhooks:', error);
+    res.status(500).send('Error importing webhooks');
+  }
+});
+
+// Middleware to verify the signature of incoming requests (reuse as before)
+const verifyOpenPhoneSignature = async (req, res, next) => {
+  try {
+
+    const webhook = await Webhook.findByPk(req.params.guid);
+    if (!webhook) {
+      return res.status(404).send('Webhook not found');
+    }
+
+    const signatureHeaderKey = webhook.signatureHeader;
+    const signatureHeader = req.headers[signatureHeaderKey];
+
     if (!signatureHeader) {
       return res.status(400).send('Missing signature');
     }
