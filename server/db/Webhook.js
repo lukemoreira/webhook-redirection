@@ -1,30 +1,32 @@
-// server/db/Webhook.js
 const { DataTypes } = require('sequelize');
 const sequelize = require('./database');
 
-// Define the Webhook model with the required columns
 const Webhook = sequelize.define('Webhook', {
   id: {
     type: DataTypes.UUID,
-    defaultValue: DataTypes.UUIDV4, // Automatically generate UUID for each new webhook
-    primaryKey: true
-  },
-  signature: {
-    type: DataTypes.STRING,
-    allowNull: true
-  },
-  signatureHeader: {
-    type: DataTypes.STRING,
-    allowNull: true
-  },
-  destination: {
-    type: DataTypes.STRING,
-    allowNull: false
+    defaultValue: DataTypes.UUIDV4,
+    primaryKey: true,
   },
   name: {
     type: DataTypes.STRING,
-    allowNull: false
-  }
+    allowNull: false,
+  },
+  signature: {
+    type: DataTypes.STRING,
+    allowNull: true,
+  },
+  signatureHeader: {
+    type: DataTypes.STRING,
+    allowNull: true,
+  },
+  destination: {
+    type: DataTypes.STRING,
+    allowNull: false,
+  },
+  mappingId: {
+    type: DataTypes.UUID,
+    allowNull: true,
+  },
 });
 
 module.exports = Webhook;

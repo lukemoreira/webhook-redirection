@@ -2,7 +2,7 @@ import './assets/index.css'
 
 import { createApp } from 'vue'
 import { createPinia } from 'pinia'
-
+import router from './router'; // Import the router
 import App from './App.vue'
 
 import { msalPlugin, msalInstance } from 'vue3-msal-plugin'
@@ -25,7 +25,7 @@ const msalConfig: Configuration = {
   }
 }
 
-console.log("clientid: ",import.meta.env.VITE_CLIENT_ID, "authority:", import.meta.env.VITE_AUTHORITY)
+console.log("client id: ",import.meta.env.VITE_CLIENT_ID, "authority:", import.meta.env.VITE_AUTHORITY)
 
 // Create a new MSAL instance with the defined configuration
 const newMsalInstance = msalInstance(msalConfig)
@@ -51,7 +51,7 @@ newMsalInstance.addEventCallback((event) => {
     // Set the account as the active account in the MSAL instance
     newMsalInstance.setActiveAccount(account)
 
-    /* Optioanlly, You can update the user store with the account data here.
+    /* Optionally, You can update the user store with the account data here.
     'account' refers to the account data obtained from the MSAL instance.
     */
     updateUser(account)
@@ -65,10 +65,10 @@ app.use(msalPlugin, newMsalInstance)
 // Get the active account from the MSAL instance
 const activeAccount = newMsalInstance.getActiveAccount()
 if (activeAccount) {
-  /* Optioanlly, you can update the user store with the account data here.
+  /* Optionally, you can update the user store with the account data here.
     'account' refers to the account data obtained from the MSAL instance.
     */
   updateUser(activeAccount)
 }
-
+app.use(router)
 app.mount('#app')
