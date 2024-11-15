@@ -74,7 +74,7 @@ app.get('/api/webhooks', async (req, res) => {
         as: 'mapping', // Make sure to use the alias name defined in associations        
       }
     });
-    console.table(webhooks.map((webhook) => ({ id: webhook.id, name: webhook.name, mi: webhook.mappingId })));
+    console.table(webhooks.map((webhook) => ({ id: webhook.id, name: webhook.name, mappingId: webhook.mappingId })));
     res.status(200).json(webhooks);
   } catch (error) {
     console.error('Error fetching webhooks:', error);

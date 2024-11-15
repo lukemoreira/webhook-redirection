@@ -101,7 +101,7 @@
                 :key="webhook.id"
                 class="hover:bg-gray-300 text-steel"
             >                
-                <TableCell class="border p-1 max-w-14 truncate">{{ webhook.mapping ? webhook.mapping.name : 'No Mapping' }}</TableCell>
+                <TableCell class="border p-1 max-w-14 truncate">{{ webhook.mappingId ? getMappingName(webhook.mappingId) : 'No Mapping' }}</TableCell>
                 <TableCell class="border p-1  truncate">{{ webhook.name }}</TableCell>
                 <TableCell class="border p-1 max-w-48 truncate">{{ webhook.destination }}</TableCell>
                 <TableCell class="border p-1 max-w-12 justify-center place-content-center items-center align-middle text-center xs:text-xs">
@@ -163,18 +163,14 @@ import {
 } from '@/components/ui/dropdown-menu'
 
 import { Pencil, RotateCcw, Trash2, Webhook, FileDown, FileUp, Activity } from 'lucide-vue-next';
-import WebhookMappings from '@/components/WebhookMappings.vue';
-import { DropdownMenuGroup } from 'radix-vue';
 
-// Define the new webhook object, webhooks list, and edit mode status
-const newWebhook = ref({
-name: '',
-signature: '',
-signatureHeader: '',
-destination: '',
-mappingId: '',
-});
-
+interface IMapping {
+    id: string;
+    name: string;
+    incomingFields: string;
+    outgoingFields: string;
+    formula: string;
+}
 
 interface IWebhook {
     id: string;
@@ -185,13 +181,21 @@ interface IWebhook {
     mappingId: string | null;
 }
 
-interface IMapping {
-    id: string;
-    name: string;
-    incomingFields: string;
-    outgoingFields: string;
-    formula: string;
-}
+const selectedMapping = ref('');
+
+const selectMapping = (mapping: IMapping) => {
+  selectedMapping.value = mapping.name;
+  newWebhook.value.mappingId = mapping.id; // Update the mappingId in newWebhook
+};
+
+// Define the new webhook object, webhooks list, and edit mode status
+const newWebhook = ref<Omit<IWebhook, 'id'> & { name: string, signature: string, signatureHeader: string, mappingId: string | null }>({
+  name: '',
+  signature: '',
+  signatureHeader: '',
+  destination: '',
+  mappingId: '',
+});
 
 const webhooks = ref<Array<IWebhook>>([]);
 const mappings = ref<Array<IMapping>>([]);
@@ -221,14 +225,6 @@ const fetchMappings = async () => {
         console.error('Error fetching mappings:', error);
     }
 };
-// New reactive variable to store the selected mapping name
-const selectedMapping = ref<string>('Pick a mapping');
-
-// Function to handle selecting a mapping
-const selectMapping = (mapping: IMapping) => {
-  newWebhook.value.mappingId = mapping.id;
-  selectedMapping.value = mapping.name; // Update the selected mapping name
-};
 
 // Function to create or update a webhook
 const submitWebhook = async () => {
@@ -245,7 +241,7 @@ const submitWebhook = async () => {
   } else {
     // Create new webhook
     try {
-      const response = await axios.post('http://localhost:5000/api/create-webhook', newWebhook.value);
+      await axios.post('http://localhost:5000/api/create-webhook', newWebhook.value);
       // Re-fetch the webhooks after creating to ensure we get the new webhook with mapping data
       await fetchWebhooks();
       resetForm();
@@ -270,7 +266,12 @@ try{
 const editWebhook = (webhook: IWebhook) => {
   editMode.value = true;
   editingWebhookId.value = webhook.id;
-  newWebhook.value = { ...webhook }; // Ensure this includes `mappingId`
+  newWebhook.value = { 
+    ...webhook, 
+    signature: webhook.signature ?? '', 
+    signatureHeader: webhook.signatureHeader ?? ''
+  };
+  console.log("newWebhook.value",newWebhook.value);
   const selectedMappingObj = mappings.value.find(mapping => mapping.id === webhook.mappingId);
   if (selectedMappingObj) {
     selectedMapping.value = selectedMappingObj.name;
@@ -338,7 +339,7 @@ const handleFileUpload = async (event: { target: { files: any[]; }; }) => {
 };
 
 // Test a webhook by ID
-const testWebhook = async (id) => {
+const testWebhook = async (id: string) => {
   try {
     await axios.post(`http://localhost:5000/api/test-webhook/${id}`);
     alert('Test webhook sent successfully!');
@@ -348,7 +349,7 @@ const testWebhook = async (id) => {
   }
 };
 
-const getMappingName = (mappingId) => {
+const getMappingName = (mappingId: string | null) => {
   if (!mappingId) return 'No Mapping';
   const mapping = mappings.value.find(mapping => mapping.id === mappingId);
   return mapping ? mapping.name : 'No Mapping';

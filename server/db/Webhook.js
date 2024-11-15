@@ -1,5 +1,7 @@
+// server/db/Webhook.js
 const { DataTypes } = require('sequelize');
 const sequelize = require('./database');
+const Mapping = require('./Mapping'); // Import the Mapping model
 
 const Webhook = sequelize.define('Webhook', {
   id: {
@@ -26,6 +28,10 @@ const Webhook = sequelize.define('Webhook', {
   mappingId: {
     type: DataTypes.UUID,
     allowNull: true,
+    references: {
+      model: Mapping, // Foreign key reference to Mapping table
+      key: 'id',
+    },
   },
 });
 
